@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+
+import os
+import requests
+import webbrowser
+
+from functools import lru_cache
+
+import pandas as pd
+from tabulate import tabulate
+
+
+@lru_cache
+def current_thunderbird_versions():
+    url = "https://product-details.mozilla.org/1.0/thunderbird_versions.json"
+    response = requests.get(url)
+    data = response.json()
+    return data
+
+
+@lru_cache
+def thunderbird_daily_version():
+    thunderbird_versions = current_thunderbird_versions()
+    daily = thunderbird_versions["LATEST_THUNDERBIRD_NIGHTLY_VERSION"].split(".")[0]
+    return daily
+
+
+@lru_cache
+def thunderbird_beta_version():
+    thunderbird_versions = current_thunderbird_versions()
+    beta = thunderbird_versions["LATEST_THUNDERBIRD_DEVEL_VERSION"].split(".")[0]
+    return beta
+
+
+@lru_cache
+def thunderbird_release_version():
+    thunderbird_versions = current_thunderbird_versions()
+    release = thunderbird_versions["LATEST_THUNDERBIRD_VERSION"].split(".")[0]
+    return release
+
+
+@lru_cache
+def thunderbird_esr_version():
+    thunderbird_versions = current_thunderbird_versions()
+    esr = thunderbird_versions["THUNDERBIRD_ESR"].split(".")[0]
+    return esr
+
+
+def beta_potential_uplifts(fixed_in, affects):
+    url = (
+        "https://bugzilla.mozilla.org/buglist.cgi?chfield=resolution&"
+        "chfieldfrom=2023-12-01&"
+        "chfieldvalue=fixed&"
+        "classification=Client%20Software&"
+        "classification=Components&"
+        "f1=short_desc&"
+        "f2=component&"
+        "f3=OP&"
+        "f4=target_milestone&"
+        f"f5=cf_status_thunderbird_{affects}&"
+        "f6=flagtypes.name&"
+        "f7=longdesc&"
+        "f8=CP&"
+        "n6=1&"
+        "n7=1&"
+        "o1=nowordssubstr&"
+        "o2=nowordssubstr&"
+        "o4=substring&"
+        "o5=equals&"
+        "o6=equals&"
+        "o7=substring&"
+        "product=Calendar&"
+        "product=MailNews%20Core&"
+        "product=Thunderbird&"
+        "resolution=FIXED&"
+        "v1=intermit&"
+        "v2=upstream%20build%20test%20theme%20add-on&"
+        f"v4={fixed_in}&"
+        "v5=affected&"
+        "v6=approval-comm-beta%3F&"
+        "v7=approved%20for%20beta&"
+        "order=bug_id&"
+        "list_id=17394131"
+    )
+    return url
+
+
+def esr_potential_uplifts(target_milestone):
+    esr = thunderbird_esr_version()
+    url = (
+        "https://bugzilla.mozilla.org/buglist.cgi?chfield=resolution&"
+        "chfieldfrom=2024-05-01&"
+        "chfieldvalue=fixed&"
+        "classification=Client%20Software&"
+        "classification=Components&"
+        "f1=short_desc&"
+        "f2=component&"
+        "f3=OP&"
+        f"f4=cf_status_thunderbird_esr{esr}&"
+        "f5=longdesc&"
+        "f6=target_milestone&"
+        "f7=flagtypes.name&"
+        f"f8=cf_status_thunderbird_{esr}&"
+        "f9=CP&"
+        "n5=1&"
+        "n7=1&"
+        "o1=nowordssubstr&"
+        "o2=nowordssubstr&"
+        "o4=nowordssubstr&"
+        "o5=substring&"
+        "o6=anywordssubstr&"
+        "o7=equals&"
+        "o8=nowordssubstr&"
+        "product=Calendar&"
+        "product=Chat%20Core&"
+        "product=MailNews%20Core&"
+        "product=Thunderbird&"
+        "resolution=FIXED&"
+        "v1=exchange%20ews%20card&"
+        "v2=upstream&"
+        "v4=fixed%20wontfix%20verified%20unaffected&"
+        f"v5=approved%20for%20esr{esr}&"
+        f"v6={target_milestone}&"
+        f"v7=approval-comm-esr{esr}%3F&"
+        "v8=fixed%20wontfix%20verified%20unaffected&"
+        "order=component&"
+        "list_id=17394134"
+    )
+    return url
+
+
+def approved_but_not_yet_uplifted(channel):
+    daily = thunderbird_daily_version()
+    beta = thunderbird_beta_version()
+    esr = thunderbird_esr_version()
+    if channel == "beta":
+        url = (
+            "https://bugzilla.mozilla.org/buglist.cgi?"
+            "resolution=FIXED&"
+            "classification=Client%20Software&"
+            "classification=Developer%20Infrastructure&"
+            "classification=Components&"
+            "classification=Server%20Software&"
+            "classification=Other&"
+            "f1=OP&"
+            f"f2=cf_status_thunderbird_{beta}&"
+            "f3=longdesc&"
+            "f4=target_milestone&"
+            "f5=flagtypes.name&"
+            "f6=CP&"
+            "v2=fixed%20verified&"
+            "v3=approved%20for%20beta&"
+            f"v4={daily}&"
+            "v5=approval-comm-beta%2B&"
+            "o2=nowordssubstr&"
+            "o3=substring&"
+            "o4=anywordssubstr&"
+            "o5=equals&"
+            "query_format=advanced&"
+            "list_id=17394371"
+        )
+    elif channel == "release":
+        url = (
+            "https://bugzilla.mozilla.org/buglist.cgi?&"
+            "resolution=FIXED&"
+            "classification=Client%20Software&"
+            "classification=Developer%20Infrastructure&"
+            "classification=Components&"
+            "classification=Server%20Software&"
+            "classification=Other&"
+            "f1=OP&"
+            f"f2=cf_status_thunderbird_{beta}&"
+            "f3=longdesc&"
+            f"f4=cf_status_thunderbird_{int(beta)-1}&"
+            "f5=flagtypes.name&"
+            "f6=CP&"
+            "v2=fixed%20verified&"
+            "v3=approved%20for%20release&"
+            "v4=fixed%20verified&"
+            "v5=approval-comm-release%2B&"
+            "o2=anywordssubstr&"
+            "o3=substring&"
+            "o4=nowordssubstr&"
+            "o5=equals&"
+            "query_format=advanced&"
+            "list_id=17394370"
+        )
+    elif channel == "esr":
+        url = (
+            "https://bugzilla.mozilla.org/buglist.cgi?"
+            "resolution=FIXED&"
+            "classification=Client%20Software&"
+            "classification=Developer%20Infrastructure&"
+            "classification=Components&"
+            "classification=Server%20Software&"
+            "classification=Other&"
+            "f1=longdesc&"
+            f"f2=cf_status_thunderbird_esr{esr}&"
+            "f3=flagtypes.name&"
+            f"v1=approved%20for%20esr{esr}&"
+            "v2=fixed%20verified&"
+            f"v3=approval-comm-esr{esr}%2B&"
+            "o1=substring&"
+            "o2=nowordssubstr&"
+            "o3=equals&"
+            "query_format=advanced&"
+            "list_id=17394369"
+        )
+    return url
+
+
+def print_versions():
+    daily_version = thunderbird_daily_version()
+    beta_version = thunderbird_beta_version()
+    release_version = thunderbird_release_version()
+    esr_version = thunderbird_esr_version()
+    table_data = {
+        "Category": [
+            "daily version",
+            "beta version",
+            "release version",
+            "esr version",
+        ],
+        "Variable": [
+            daily_version,
+            beta_version,
+            release_version,
+            esr_version,
+        ],
+    }
+    df = pd.DataFrame(table_data)
+    table_data = df.values.tolist()
+    print(tabulate(table_data, tablefmt="plain", colalign=("left", "left")))
+
+
+def render_links_to_html(output_file, links):
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Release bugzilla queries</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            ul { list-style-type: none; }
+            a { text-decoration: none; color: blue; }
+            a:hover { text-decoration: underline; }
+        </style>
+    </head>
+    <body>
+        <h1>Release bugzilla queries</h1>
+        <ul>
+    """
+
+    for description, url in links:
+        html_content += (
+            f'            <li><a href="{url}" target="_blank">{description}</a></li>\n'
+        )
+
+    html_content += """
+        </ul>
+    </body>
+    </html>
+    """
+
+    with open(output_file, "w") as file:
+        file.write(html_content)
+
+    print(f"HTML file generated at {output_file}")
+    webbrowser.open(f"file://{output_file}")
+
+
+def main():
+    links = list()
+    daily = thunderbird_daily_version()
+    beta = thunderbird_beta_version()
+    release = thunderbird_release_version()
+    esr = thunderbird_esr_version()
+
+    print_versions()
+
+    for version in reversed(range(int(daily) - 3, int(daily))):
+        links.append(
+            (
+                f"fixed in {daily}, affects {version}",
+                beta_potential_uplifts(fixed_in=daily, affects=version),
+            )
+        )
+    for version in reversed(range(int(esr) + 1, int(daily) + 1)):
+        links.append(
+            (
+                f"potential uplift to esr{esr}, not yet requested (TM {version})",
+                esr_potential_uplifts(target_milestone=version),
+            )
+        )
+    links.append(
+        (
+            f"Approved but not yet uplifted to beta {beta}",
+            approved_but_not_yet_uplifted("beta"),
+        )
+    )
+    links.append(
+        (
+            f"Approved but not yet uplifted to release {release}",
+            approved_but_not_yet_uplifted("release"),
+        )
+    )
+    links.append(
+        (
+            f"Approved but not yet uplifted to esr {esr}",
+            approved_but_not_yet_uplifted("esr"),
+        )
+    )
+
+    render_links_to_html(
+        os.path.join(os.getcwd(), "thunderbird_uplift_queries.html"), links
+    )
+
+
+if __name__ == "__main__":
+    main()
