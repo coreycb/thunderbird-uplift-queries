@@ -46,13 +46,18 @@ def thunderbird_esr_version():
     return esr
 
 
-def beta_potential_uplifts(fixed_in, affects):
+def beta_potential_uplifts(fixed_in, affects, regression=True):
+    if regression:
+        regression = "keywords=regression&keywords_type=allwords&"
+    else:
+        regression = "keywords=regression&keywords_type=nowords&"
     url = (
         "https://bugzilla.mozilla.org/buglist.cgi?chfield=resolution&"
         "chfieldfrom=2023-12-01&"
         "chfieldvalue=fixed&"
         "classification=Client%20Software&"
         "classification=Components&"
+        f"{regression}"
         "f1=short_desc&"
         "f2=component&"
         "f3=OP&"
@@ -85,14 +90,63 @@ def beta_potential_uplifts(fixed_in, affects):
     return url
 
 
-def esr_potential_uplifts(target_milestone):
+def release_potential_uplifts(fixed_in, affects, regression=True):
+    if regression:
+        regression = "keywords=regression&keywords_type=allwords&"
+    else:
+        regression = "keywords=regression&keywords_type=nowords&"
+    url = (
+        "https://bugzilla.mozilla.org/buglist.cgi?chfield=resolution&"
+        "chfieldfrom=2023-12-01&"
+        "chfieldvalue=fixed&"
+        "classification=Client%20Software&"
+        "classification=Components&"
+        f"{regression}"
+        "f1=short_desc&"
+        "f2=component&"
+        "f3=OP&"
+        "f4=target_milestone&"
+        f"f5=cf_status_thunderbird_{affects}&"
+        "f6=flagtypes.name&"
+        "f7=longdesc&"
+        "f8=CP&"
+        "n6=1&"
+        "n7=1&"
+        "o1=nowordssubstr&"
+        "o2=nowordssubstr&"
+        "o4=substring&"
+        "o5=equals&"
+        "o6=equals&"
+        "o7=substring&"
+        "product=Calendar&"
+        "product=MailNews%20Core&"
+        "product=Thunderbird&"
+        "resolution=FIXED&"
+        "v1=intermit&"
+        "v2=upstream%20build%20test%20theme%20add-on&"
+        f"v4={fixed_in}&"
+        "v5=affected&"
+        "v6=approval-comm-release%3F&"
+        "v7=approved%20for%20release&"
+        "order=bug_id&"
+        "list_id=17394131"
+    )
+    return url
+
+
+def esr_potential_uplifts(target_milestone, regression=True):
     esr = thunderbird_esr_version()
+    if regression:
+        regression = "keywords=regression&keywords_type=allwords&"
+    else:
+        regression = "keywords=regression&keywords_type=nowords&"
     url = (
         "https://bugzilla.mozilla.org/buglist.cgi?chfield=resolution&"
         "chfieldfrom=2024-05-01&"
         "chfieldvalue=fixed&"
         "classification=Client%20Software&"
         "classification=Components&"
+        f"{regression}"
         "f1=short_desc&"
         "f2=component&"
         "f3=OP&"
@@ -283,15 +337,40 @@ def main():
     for version in reversed(range(int(daily) - 3, int(daily))):
         links.append(
             (
-                f"fixed in {daily}, affects {version}",
-                beta_potential_uplifts(fixed_in=daily, affects=version),
+                f"fixed in {daily}, affects {version} (regression)",
+                beta_potential_uplifts(fixed_in=daily, affects=version, regression=True),
+            )
+        )
+        links.append(
+            (
+                f"fixed in {daily}, affects {version} (non-regression)",
+                beta_potential_uplifts(fixed_in=daily, affects=version, regression=False),
+            )
+        )
+    for version in reversed(range(int(beta) - 3, int(beta))):
+        links.append(
+            (
+                f"fixed in {beta}, affects {version} (regression)",
+                release_potential_uplifts(fixed_in=beta, affects=version, regression=True),
+            )
+        )
+        links.append(
+            (
+                f"fixed in {beta}, affects {version} (non-regression)",
+                release_potential_uplifts(fixed_in=beta, affects=version, regression=False),
             )
         )
     for version in reversed(range(int(esr) + 1, int(daily) + 1)):
         links.append(
             (
-                f"potential uplift to esr{esr}, not yet requested (TM {version})",
-                esr_potential_uplifts(target_milestone=version),
+                f"fixed in {version}, may affect {esr}esr (regression)",
+                esr_potential_uplifts(target_milestone=version, regression=True),
+            )
+        )
+        links.append(
+            (
+                f"fixed in {version}, may affect {esr}esr (non-regression)",
+                esr_potential_uplifts(target_milestone=version, regression=False),
             )
         )
     links.append(
