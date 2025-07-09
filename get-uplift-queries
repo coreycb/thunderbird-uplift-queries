@@ -45,6 +45,12 @@ def thunderbird_esr_version():
     esr = thunderbird_versions["THUNDERBIRD_ESR"].split(".")[0]
     return esr
 
+@lru_cache
+def thunderbird_esr_next_version():
+    thunderbird_versions = current_thunderbird_versions()
+    esr = thunderbird_versions["THUNDERBIRD_ESR_NEXT"].split(".")[0]
+    return esr
+
 
 def beta_potential_uplifts(fixed_in, affects, regression=True):
     if regression:
@@ -132,8 +138,7 @@ def release_potential_uplifts(fixed_in, affects, regression=True):
     return url
 
 
-def esr_potential_uplifts(target_milestone, regression=True):
-    esr = thunderbird_esr_version()
+def _esr_potential_uplifts(esr, target_milestone, regression=True):
     if regression:
         regression = "keywords=regression&keywords_type=allwords&"
     else:
@@ -180,10 +185,21 @@ def esr_potential_uplifts(target_milestone, regression=True):
     return url
 
 
+def esr_potential_uplifts(target_milestone, regression=True):
+    esr = thunderbird_esr_version()
+    return _esr_potential_uplifts(esr, target_milestone, regression)
+
+
+def esr_next_potential_uplifts(target_milestone, regression=True):
+    esr_next = thunderbird_esr_next_version()
+    return _esr_potential_uplifts(esr_next, target_milestone, regression)
+
+
 def approved_but_not_yet_uplifted(channel):
     daily = thunderbird_daily_version()
     beta = thunderbird_beta_version()
     esr = thunderbird_esr_version()
+    esr_next = thunderbird_esr_next_version()
     if channel == "beta":
         url = (
             "https://bugzilla.mozilla.org/buglist.cgi?"
@@ -315,6 +331,47 @@ def approved_but_not_yet_uplifted(channel):
             "v9=fixed%20verified&"
             "v10=leave-open"
         )
+    elif channel == "esr_next":
+        url = (
+            "https://bugzilla.mozilla.org/buglist.cgi?"
+            "classification=Client%20Software&"
+            "classification=Developer%20Infrastructure&"
+            "classification=Components&"
+            "classification=Server%20Software&"
+            "classification=Other&"
+            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_{beta}%2Ccf_status_thunderbird_{esr_next}&"
+            "query_format=advanced&"
+            "query_based_on=&"
+            "resolution=---&"
+            "resolution=FIXED&"
+            "f1=OP&"
+            "f2=longdesc&"
+            "f3=flagtypes.name&"
+            f"f4=cf_status_thunderbird_esr{esr_next}&"
+            "f5=CP&"
+            "f6=OP&"
+            "f7=longdesc&"
+            "f8=flagtypes.name&"
+            f"f9=cf_status_thunderbird_esr{esr_next}&"
+            "f10=keywords&"
+            "f11=CP&"
+            "j_top=OR&"
+            "o2=substring&"
+            "o3=equals&"
+            "o4=nowordssubstr&"
+            "o7=substring&"
+            "o8=equals&"
+            "o9=anywordssubstr&"
+            "o10=substring&"
+            f"v2=approved%20for%20esr{esr_next}&"
+            f"v3=approval-comm-esr{esr_next}%2B&"
+            "v4=fixed%20verified&"
+            f"v7=approved%20for%20esr{esr_next}&"
+            f"v8=approval-comm-esr{esr_next}%2B&"
+            "v9=fixed%20verified&"
+            "v10=leave-open"
+        )
+
     return url
 
 
@@ -323,11 +380,13 @@ def print_versions():
     beta_version = thunderbird_beta_version()
     release_version = thunderbird_release_version()
     esr_version = thunderbird_esr_version()
+    esr_next_version = thunderbird_esr_next_version()
     table_data = {
         "Category": [
             "daily version",
             "beta version",
             "release version",
+            "esr version",
             "esr version",
         ],
         "Variable": [
@@ -335,6 +394,7 @@ def print_versions():
             beta_version,
             release_version,
             esr_version,
+            esr_next_version,
         ],
     }
     df = pd.DataFrame(table_data)
@@ -386,6 +446,7 @@ def main():
     beta = thunderbird_beta_version()
     release = thunderbird_release_version()
     esr = thunderbird_esr_version()
+    esr_next = thunderbird_esr_next_version()
 
     print_versions()
 
@@ -428,6 +489,19 @@ def main():
                 esr_potential_uplifts(target_milestone=version, regression=False),
             )
         )
+    for version in reversed(range(int(esr_next) + 1, int(daily) + 1)):
+        links.append(
+            (
+                f"fixed in {version}, may affect {esr_next}esr (regression)",
+                esr_next_potential_uplifts(target_milestone=version, regression=True),
+            )
+        )
+        links.append(
+            (
+                f"fixed in {version}, may affect {esr_next}esr (non-regression)",
+                esr_next_potential_uplifts(target_milestone=version, regression=False),
+            )
+        )
     links.append(
         (
             f"Approved but not yet uplifted to beta {beta}",
@@ -444,6 +518,12 @@ def main():
         (
             f"Approved but not yet uplifted to esr {esr}",
             approved_but_not_yet_uplifted("esr"),
+        )
+    )
+    links.append(
+        (
+            f"Approved but not yet uplifted to esr {esr_next}",
+            approved_but_not_yet_uplifted("esr_next"),
         )
     )
 
