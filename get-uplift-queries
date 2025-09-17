@@ -387,16 +387,17 @@ def print_versions():
             "beta version",
             "release version",
             "esr version",
-            "esr version",
         ],
         "Variable": [
             daily_version,
             beta_version,
             release_version,
             esr_version,
-            esr_next_version,
         ],
     }
+    if esr_next_version:
+        table_data["Category"].append("esr version")
+        table_data["Variable"].append(esr_next_version)
     df = pd.DataFrame(table_data)
     table_data = df.values.tolist()
     print(tabulate(table_data, tablefmt="plain", colalign=("left", "left")))
@@ -489,19 +490,20 @@ def main():
                 esr_potential_uplifts(target_milestone=version, regression=False),
             )
         )
-    for version in reversed(range(int(esr_next) + 1, int(daily) + 1)):
-        links.append(
-            (
-                f"fixed in {version}, may affect {esr_next}esr (regression)",
-                esr_next_potential_uplifts(target_milestone=version, regression=True),
+    if esr_next:
+        for version in reversed(range(int(esr_next) + 1, int(daily) + 1)):
+            links.append(
+                (
+                    f"fixed in {version}, may affect {esr_next}esr (regression)",
+                    esr_next_potential_uplifts(target_milestone=version, regression=True),
+                )
             )
-        )
-        links.append(
-            (
-                f"fixed in {version}, may affect {esr_next}esr (non-regression)",
-                esr_next_potential_uplifts(target_milestone=version, regression=False),
+            links.append(
+                (
+                    f"fixed in {version}, may affect {esr_next}esr (non-regression)",
+                    esr_next_potential_uplifts(target_milestone=version, regression=False),
+                )
             )
-        )
     links.append(
         (
             f"Approved but not yet uplifted to beta {beta}",
@@ -520,12 +522,13 @@ def main():
             approved_but_not_yet_uplifted("esr"),
         )
     )
-    links.append(
-        (
-            f"Approved but not yet uplifted to esr {esr_next}",
-            approved_but_not_yet_uplifted("esr_next"),
+    if esr_next:
+        links.append(
+            (
+                f"Approved but not yet uplifted to esr {esr_next}",
+                approved_but_not_yet_uplifted("esr_next"),
+            )
         )
-    )
 
     render_links_to_html(
         os.path.join(os.getcwd(), "thunderbird_uplift_queries.html"), links
