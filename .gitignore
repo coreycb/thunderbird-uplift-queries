@@ -1,0 +1,4 @@
+.venv/
+build/
+*.egg-info/
+thunderbird_uplift_queries.html

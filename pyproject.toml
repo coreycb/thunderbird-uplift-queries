@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thunderbird-uplift-queries"
+version = "1.0.0"
+description = "Script used to gather bugzilla uplift queries for Thunderbird"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "Corey Bryant", email = "corey@thunderbird.net" }
+]
+dependencies = [
+    "pandas",
+    "requests",
+    "tabulate",
+]
+
+[project.scripts]
+get-uplift-queries = "thunderbird_uplift_queries.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "twine",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

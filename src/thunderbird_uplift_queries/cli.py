@@ -200,6 +200,8 @@ def approved_but_not_yet_uplifted(channel):
     beta = thunderbird_beta_version()
     esr = thunderbird_esr_version()
     esr_next = thunderbird_esr_next_version()
+
+    url = ""
     if channel == "beta":
         url = (
             "https://bugzilla.mozilla.org/buglist.cgi?"
