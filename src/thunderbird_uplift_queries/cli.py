@@ -195,6 +195,34 @@ def esr_next_potential_uplifts(target_milestone, regression=True):
     return _esr_potential_uplifts(esr_next, target_milestone, regression)
 
 
+def advisories_query():
+    beta = thunderbird_beta_version()
+    release = thunderbird_release_version()
+    esr = thunderbird_esr_version()
+
+    url = (
+        "https://bugzilla.mozilla.org/buglist.cgi?"
+        f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Creporter%2Cversion%2Cregressed_by%2Cchangeddate%2Copendate%2Ccf_status_thunderbird_{release}%2Ccf_status_thunderbird_{beta}%2Ccf_status_thunderbird_esr{esr}%2Ckeywords%2Cstatus_whiteboard&"
+        f"f1=cf_status_thunderbird_{beta}&"
+        f"f2=cf_tracking_thunderbird_{release}&"
+        "f3=OP&"
+        "f4=bug_group&"
+        "f5=keywords&"
+        "f6=CP&"
+        "j3=OR&"
+        "o1=anywords&"
+        "o2=nowords&"
+        "o4=substring&"
+        "o5=substring&"
+        "v1=fixed%20verified&"
+        "v2=fixed%20verified%20disabled%20unaffected&"
+        "v4=core-security&"
+        "v5=sec-&"
+        "order=bug_id"
+    )
+    return url
+
+
 def approved_but_not_yet_uplifted(channel):
     daily = thunderbird_daily_version()
     beta = thunderbird_beta_version()
@@ -506,6 +534,12 @@ def main():
                     esr_next_potential_uplifts(target_milestone=version, regression=False),
                 )
             )
+    links.append(
+        (
+            f"Security bugs fixed in {beta} not yet resolved for {release}",
+            advisories_query(),
+        )
+    )
     links.append(
         (
             f"Approved but not yet uplifted to beta {beta}",
