@@ -193,15 +193,13 @@ def esr_next_potential_uplifts(target_milestone, regression=True):
 
 
 def advisories_query():
-    beta = thunderbird_beta_version()
-    release = thunderbird_release_version()
     esr = thunderbird_esr_version()
 
     url = (
         "https://bugzilla.mozilla.org/buglist.cgi?"
-        f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Creporter%2Cversion%2Cregressed_by%2Cchangeddate%2Copendate%2Ccf_status_thunderbird_{release}%2Ccf_status_thunderbird_{beta}%2Ccf_status_thunderbird_esr{esr}%2Ckeywords%2Cstatus_whiteboard&"
-        f"f1=cf_status_thunderbird_{beta}&"
-        f"f2=cf_tracking_thunderbird_{release}&"
+        f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Creporter%2Cversion%2Cregressed_by%2Cchangeddate%2Copendate%2Ccf_status_thunderbird_release%2Ccf_status_thunderbird_beta%2Ccf_status_thunderbird_esr{esr}%2Ckeywords%2Cstatus_whiteboard&"
+        "f1=cf_status_thunderbird_beta&"
+        "f2=cf_status_thunderbird_release&"
         "f3=OP&"
         "f4=bug_group&"
         "f5=keywords&"
@@ -222,7 +220,6 @@ def advisories_query():
 
 def approved_but_not_yet_uplifted(channel):
     daily = thunderbird_daily_version()
-    beta = thunderbird_beta_version()
     esr = thunderbird_esr_version()
     esr_next = thunderbird_esr_next_version()
 
@@ -235,7 +232,7 @@ def approved_but_not_yet_uplifted(channel):
             "classification=Components&"
             "classification=Server%20Software&"
             "classification=Other&"
-            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_{daily}%2Ccf_status_thunderbird_{beta}&"
+            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_nightly%2Ccf_status_thunderbird_beta&"
             "query_format=advanced&"
             "resolution=---&"
             "resolution=FIXED&"
@@ -243,13 +240,13 @@ def approved_but_not_yet_uplifted(channel):
             "f2=longdesc&"
             "f3=flagtypes.name&"
             "f4=target_milestone&"
-            f"f5=cf_status_thunderbird_{beta}&"
+            f"f5=cf_status_thunderbird_beta&"
             "f6=CP&"
             "f7=OP&"
             "f8=longdesc&"
             "f9=flagtypes.name&"
             "f10=target_milestone&"
-            f"f11=cf_status_thunderbird_{beta}&"
+            f"f11=cf_status_thunderbird_beta&"
             "f12=keywords&"
             "f13=CP&"
             "j_top=OR&"
@@ -280,7 +277,7 @@ def approved_but_not_yet_uplifted(channel):
             "classification=Components&"
             "classification=Server%20Software&"
             "classification=Other&"
-            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_{beta}%2Ccf_status_thunderbird_{int(beta)-1}&"
+            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_beta%2Ccf_status_thunderbird_release&"
             "query_format=advanced&"
             "query_based_on=&"
             "resolution=---&"
@@ -288,14 +285,14 @@ def approved_but_not_yet_uplifted(channel):
             "f1=OP&"
             "f2=longdesc&"
             "f3=flagtypes.name&"
-            f"f4=cf_status_thunderbird_{beta}&"
-            f"f5=cf_status_thunderbird_{int(beta)-1}&"
+            f"f4=cf_status_thunderbird_beta&"
+            f"f5=cf_status_thunderbird_release&"
             "f6=CP&"
             "f7=OP&"
             "f8=longdesc&"
             "f9=flagtypes.name&"
-            f"f10=cf_status_thunderbird_{beta}&"
-            f"f11=cf_status_thunderbird_{int(beta)-1}&"
+            f"f10=cf_status_thunderbird_beta&"
+            f"f11=cf_status_thunderbird_release&"
             "f12=keywords&"
             "f13=CP&"
             "j_top=OR&"
@@ -326,7 +323,7 @@ def approved_but_not_yet_uplifted(channel):
             "classification=Components&"
             "classification=Server%20Software&"
             "classification=Other&"
-            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_{beta}%2Ccf_status_thunderbird_{esr}&"
+            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_beta%2Ccf_status_thunderbird_{esr}&"
             "query_format=advanced&"
             "query_based_on=&"
             "resolution=---&"
@@ -366,7 +363,7 @@ def approved_but_not_yet_uplifted(channel):
             "classification=Components&"
             "classification=Server%20Software&"
             "classification=Other&"
-            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_{beta}%2Ccf_status_thunderbird_{esr_next}&"
+            f"columnlist=bug_type%2Cshort_desc%2Cproduct%2Ccomponent%2Cassigned_to%2Cbug_status%2Cresolution%2Cchangeddate%2Creporter%2Copendate%2Cbug_severity%2Cstatus_whiteboard%2Cversion%2Ckeywords%2Ctarget_milestone%2Ccf_status_thunderbird_beta%2Ccf_status_thunderbird_{esr_next}&"
             "query_format=advanced&"
             "query_based_on=&"
             "resolution=---&"
