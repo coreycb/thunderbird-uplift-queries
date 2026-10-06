@@ -215,7 +215,6 @@ def advisories_query():
         "v1=fixed%20verified&"
         "v2=fixed%20verified%20disabled%20unaffected&"
         "v4=core-security&"
-        "v5=sec-&"
         "order=bug_id"
     )
     return url
